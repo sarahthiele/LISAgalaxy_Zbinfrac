@@ -181,8 +181,11 @@ def a_of_RLOF(pop):
     '''
     m1 = pop.mass_1
     m2 = pop.mass_2
-    R2 = pop.rad_2
-    q = m2 / m1
+    primary_mass = np.where(m1>m2, m1, m2)
+    secondary_mass = np.where(m1>m2, m2, m1)
+    secondary_radius = np.where(m1>m2, pop.rad_2, pop.rad_1)
+    R2 = secondary_radius
+    q = secondary_mass / primary_mass
     num = 0.49 * q ** (2/3)
     denom = 0.6 * q ** (2/3) + np.log(1 + q ** (1/3))
     a = denom * R2 / num
@@ -767,9 +770,9 @@ def get_formeff(pathtodat, pathtoLband, pathtosave, getfrom='Lband'):
     eff_05 = []
     for kstar1, kstar2, label in tqdm.tqdm(zip(kstar1_list, kstar2_list, labels)):
         files, lab = dutil.getfiles(kstar1=kstar1, kstar2=kstar2)
-        Lbandfiles = dutil.Lband_files(kstar1='10', kstar2='10', var=True)
+        Lbandfiles = dutil.Lband_files(kstar1=kstar1, kstar2=kstar2, var=True)
         eff_var.append(formeff(files, Lbandfiles, pathtodat, pathtoLband, label, 'FZ', getfrom))
-        Lbandfiles = dutil.Lband_files(kstar1='10', kstar2='10', var=False)
+        Lbandfiles = dutil.Lband_files(kstar1=kstar1, kstar2=kstar2, var=False)
         eff_05.append(formeff(files, Lbandfiles, pathtodat, pathtoLband, label, 'F50', getfrom))
         print('finished {}'.format(label))
 
