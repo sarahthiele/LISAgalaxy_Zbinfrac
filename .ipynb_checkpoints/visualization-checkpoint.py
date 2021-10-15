@@ -7,6 +7,7 @@ from matplotlib.colors import TwoSlopeNorm
 from matplotlib import rcParams
 from matplotlib.lines import Line2D
 import matplotlib.colors as col
+from matplotlib.ticker import AutoMinorLocator
 import tqdm
 import seaborn as sns
 import pandas as pd
@@ -26,7 +27,7 @@ met_arr = np.logspace(np.log10(1e-4), np.log10(0.03), 15)
 met_arr = np.round(met_arr, 8)
 met_arr = np.append(0.0, met_arr)
 
-G = const.G.value  # gravitational constant
+G = const.G.value
 c = const.c.value  # speed of light in m s^-1
 M_sol = const.M_sun.value  # sun's mass in kg
 R_sol = const.R_sun.value  # sun's radius in metres
@@ -34,13 +35,16 @@ sec_Myr = u.Myr.to('s')  # seconds in a million years
 m_kpc = u.kpc.to('m')  # metres in a kiloparsec
 L_sol = const.L_sun.value  # solar luminosity in Watts
 Z_sun = 0.02  # solar metallicity
-sun = coords.get_sun(Time("2021-04-23T00:00:00", scale='utc'))  # sun coordinates
+sun = coords.get_sun(Time("2021-04-23T00:00:00", scale='utc'))
 sun_g = sun.transform_to(coords.Galactocentric)
 sun_yGx = sun_g.galcen_distance.to('kpc').value
 sun_zGx = sun_g.z.to('kpc').value
+M_astro = 7070  # FIRE star particle mass in solar masses
+mag_lim = 23  # chosen bolometric magnitude limit
 
 
-def plot_FIRE_F_mass(FIRE_path, met_arr):
+
+def plot_FIRE_F_mass(FIRE_path, met_arr, save=False):
     FIRE = pd.read_hdf(FIRE_path+'FIRE.h5')
     fig, ax = plt.subplots()
     plt.grid(lw=0.25, which='both')
@@ -64,16 +68,21 @@ def plot_FIRE_F_mass(FIRE_path, met_arr):
     ax.set_zorder(ax2.get_zorder()+1)
     ax.patch.set_visible(False)
     ax.set_xlabel('Log$_{10}$(Z/Z$_\odot$)')
+    #ax.set_ylabel('Binary Fraction f$_b$(Z)')
     ax.set_ylabel('Binary Fraction')
     ax2.set_ylabel(r'M$_{\rm{stars}}$ per Z bin (M$_\odot$)')
+    #plt.savefig('PaperPlots/FIREfb.png')
     ax2.set_yticks([1e4, 1e5, 1e6, 1e7]);
     ax2.set_yticklabels(['7e7', '7e8', '7e9', '7e10']);
-    plt.show(block=False)
-    
+    if save:
+        plt.savefig('SFH_vs_fb.png', dpi=250)
+    else:
+        plt.show(block=False)
+
     return
 
 
-def plot_FIRE_F_NSP(FIRE_path, met_arr):
+def plot_FIRE_F_NSP(FIRE_path, met_arr, save=False):
     FIRE = pd.read_hdf(FIRE_path+'FIRE.h5')
     fig, ax = plt.subplots()
     plt.grid(lw=0.25, which='both')
@@ -99,25 +108,29 @@ def plot_FIRE_F_NSP(FIRE_path, met_arr):
     ax.set_xlabel('Log$_{10}$(Z/Z$_\odot$)')
     ax.set_ylabel('Binary Fraction')
     ax2.set_ylabel(r'N$_{\rm{SP}}$ per Z bin')
-    plt.show(block=False)
-
+    if save:
+        plt.savefig('N_form_vs_fb.png', dpi=250)
+    else:
+        plt.show(block=False)
     return
 
-def plot_FIREpos(FIRE_path):
+def plot_FIREpos(FIRE_path, save=False):
     FIRE = pd.read_hdf(FIRE_path+'FIRE.h5')
     X = FIRE.xGx
     Y = FIRE.yGx
     Z = FIRE.zGx
     fig, ax = plt.subplots(figsize=(10, 8))
     plt.hist2d(X, Y, norm=col.LogNorm(), bins=500);
-    plt.scatter(0, sun_yGx, edgecolor='xkcd:light pink', facecolor='xkcd:bright pink', s=90, label='Sun')
+    plt.scatter(0, sun_yGx, edgecolor='xkcd:light pink', facecolor='xkcd:bright pink', s=90, label='Sun', rasterized=True)
     cb = plt.colorbar()
     cb.ax.set_ylabel('LogNormed Density')
     plt.legend(fontsize=20, markerscale=2)
     plt.xlabel('X (kpc)')
     plt.ylabel('Y (kpc)')
-    plt.show(block=False)
-    
+    if save:
+        plt.savefig('FIRE_pos.png', dpi=300)
+    else:
+        plt.show(block=False)
     return
 
 
@@ -174,51 +187,50 @@ def get_formeff(pathtodat, pathtoeff, pathtoLband, getfrom):
     
     return
 
-def plot_formeff(effHe, effHe05, effCOHe, effCOHe05, effCO, effCO05, effONe, effONe05):
-    fig, ax = plt.subplots(1, 4, figsize=(30, 8))
+def plot_formeff(effHe, effHe05, effCOHe, effCOHe05, effCO, effCO05, effONe, effONe05, save=False):
+    fig, ax = plt.subplots(1, 4, figsize=(16, 4))
     ax[0].plot(np.log10(met_arr[1:]/Z_sun), effHe*1e3, color='xkcd:tomato red',
-                 drawstyle='steps-mid', lw=4, label='FZ')
+                 drawstyle='steps-mid', lw=3, label='FZ')
     ax[0].plot(np.log10(met_arr[1:]/Z_sun), effHe05*1e3, color='xkcd:tomato red',
-               ls='--', drawstyle='steps-mid', lw=4, label='F50')
+               ls='--', drawstyle='steps-mid', lw=3, label='F50')
 
     ax[1].plot(np.log10(met_arr[1:]/Z_sun), effCOHe*1e3, color='xkcd:blurple', 
-               drawstyle='steps-mid', lw=4, label='FZ')
+               drawstyle='steps-mid', lw=3, label='FZ')
     ax[1].plot(np.log10(met_arr[1:]/Z_sun), effCOHe05*1e3, color='xkcd:blurple', 
-               ls='--', drawstyle='steps-mid', lw=4, label='F50')
+               ls='--', drawstyle='steps-mid', lw=3, label='F50')
 
     ax[2].plot(np.log10(met_arr[1:]/Z_sun), effCO*1e3, color='xkcd:pink', 
-               drawstyle='steps-mid', lw=4, label='FZ')
+               drawstyle='steps-mid', lw=3, label='FZ')
     ax[2].plot(np.log10(met_arr[1:]/Z_sun), effCO05*1e3, color='xkcd:pink', ls='--', 
-               drawstyle='steps-mid', lw=4, label='F50')
+               drawstyle='steps-mid', lw=3, label='F50')
 
     ax[3].plot(np.log10(met_arr[1:]/Z_sun), effONe*1e3, color='xkcd:light blue', 
-               drawstyle='steps-mid', lw=4, label='FZ')
+               drawstyle='steps-mid', lw=3, label='FZ')
     ax[3].plot(np.log10(met_arr[1:]/Z_sun), effONe05*1e3, color='xkcd:light blue', ls='--', 
-               drawstyle='steps-mid', lw=4, label='F50')
+               drawstyle='steps-mid', lw=3, label='F50')
 
-    #ax[0].set_ylabel('DWD Formation\nEfficiency (10$^{-3}$ M$_\odot^{-1}$)', fontsize=27)
-    ax[0].set_ylabel(r'$\eta_{\rm{form}}$ [10$^{-3}$ M$_\odot^{-1}$]', fontsize=27)
-    #ax[1].set_ylim(top=3.75)
-    #ax[2].set_ylim(top=16)
-    #ax[0].set_ylim(top=2.25)
-    #ax[3].set_ylim(top=1.4)
-    #ax[0].set_yticks([0.25, 0.75, 1.25, 1.75, 2.25])
-    #ax[1].set_yticks([0.75, 1.5, 2.25, 3., 3.75])
-    plt.subplots_adjust(wspace=0.18)
+    ax[0].set_ylabel(r'$\eta_{\rm{form}}$ [10$^{-3}$ M$_\odot^{-1}$]', fontsize=18)
+
+
     labels = ['He + He', "CO + He", 'CO + CO', "ONe + X"]
     for i in range(4):
-        #ax[i].set_yscale('log')
         ax[i].set_xticks([-2, -1.5, -1, -0.5, 0.])
-        ax[i].tick_params(labelsize=22)
-        ax[i].text(0.05, 0.05, labels[i], fontsize=25, transform=ax[i].transAxes)
+        ax[i].text(0.05, 0.05, labels[i], fontsize=18, transform=ax[i].transAxes)
         ax[i].legend(loc='lower left', bbox_to_anchor= (0.0, 1.01), ncol=3, borderaxespad=0, 
-                   frameon=False, fontsize=26)
-        ax[i].set_xlabel('Log$_{10}$(Z/Z$_\odot$)', fontsize=27)
-    plt.show(block=False)
+                   frameon=False, fontsize=15)
+        ax[i].set_xlabel('Log$_{10}$(Z/Z$_\odot$)', fontsize=18)
+        ax[i].xaxis.set_minor_locator(AutoMinorLocator())
+        ax[i].yaxis.set_minor_locator(AutoMinorLocator())
+        ax[i].tick_params(labelsize=15)
     
+    plt.tight_layout()
+    if save:
+        plt.savefig('form_eff.png', dpi=250)
+    else:
+        plt.show(block=False)    
     return()
 
-def make_numLISAplot(numsFZ, numsF50, FIREmin=0.00015, FIREmax=13.346, Z_sun=0.02):
+def make_numLISAplot(numsFZ, numsF50, FIREmin=0.00015, FIREmax=13.346, Z_sun=0.02, save=False):
     num = 30
     met_bins = np.logspace(np.log10(FIREmin), np.log10(FIREmax), num)*Z_sun
 
@@ -232,47 +244,52 @@ def make_numLISAplot(numsFZ, numsF50, FIREmin=0.00015, FIREmax=13.346, Z_sun=0.0
     COnums05 = numsF50.CO.values
     ONenums05 = numsF50.ONe.values
 
-    fig, ax = plt.subplots(1, 4, figsize=(24, 6))
+    fig, ax = plt.subplots(1, 4, figsize=(16, 4))
 
     ax[0].plot(np.log10(met_bins[1:]/Z_sun), Henums/1e5, drawstyle='steps-mid', 
                color='xkcd:tomato red', lw=3, label='FZ')
     ax[0].plot(np.log10(met_bins[1:]/Z_sun), Henums05/1e5, 
                drawstyle='steps-mid', color='xkcd:tomato red', ls='--', lw=3, label='F50')
-    ax[0].text(0.05, 0.9, 'He + He', fontsize=20, transform=ax[0].transAxes)
+    ax[0].text(0.05, 0.85, 'He + He', fontsize=18, transform=ax[0].transAxes)
 
     ax[1].plot(np.log10(met_bins[1:]/Z_sun), COHenums/1e5, drawstyle='steps-mid', 
                color='xkcd:blurple', lw=3, label='FZ')
     ax[1].plot(np.log10(met_bins[1:]/Z_sun), COHenums05/1e5, drawstyle='steps-mid', 
                color='xkcd:blurple', ls='--', lw=3, label='F50')
-    ax[1].text(0.05, 0.9, 'CO + He', fontsize=20, transform=ax[1].transAxes)
+    ax[1].text(0.05, 0.85, 'CO + He', fontsize=18, transform=ax[1].transAxes)
 
     ax[2].plot(np.log10(met_bins[1:]/Z_sun), COnums/1e5, drawstyle='steps-mid', 
                color='xkcd:pink', lw=3, label='FZ')
     ax[2].plot(np.log10(met_bins[1:]/Z_sun), COnums05/1e5, drawstyle='steps-mid', 
                color='xkcd:pink', ls='--', lw=3, label='F50')
-    ax[2].text(0.05, 0.9, 'CO + CO', fontsize=20, transform=ax[2].transAxes)
+    ax[2].text(0.05, 0.85, 'CO + CO', fontsize=18, transform=ax[2].transAxes)
 
     ax[3].plot(np.log10(met_bins[1:]/Z_sun), ONenums/1e5, drawstyle='steps-mid', 
                color='xkcd:light blue', lw=3, label='FZ')
     ax[3].plot(np.log10(met_bins[1:]/Z_sun), ONenums05/1e5, drawstyle='steps-mid',
                color='xkcd:light blue', ls='--', lw=3, label='F50')
-    ax[3].text(0.05, 0.9, 'ONe + X', fontsize=20, transform=ax[3].transAxes)
+    ax[3].text(0.05, 0.85, 'ONe + X', fontsize=18, transform=ax[3].transAxes)
 
     for i in range(4):
         #ax[i].set_yscale('log')
         #ax[i].set_ylim(10, 2.5e6)
         #ax[i].grid(which='both', zorder=0, alpha=0.2)
-        ax[i].set_xlabel('Log$_{10}$(Z/Z$_\odot$)')
+        ax[i].set_xlabel('Log$_{10}$(Z/Z$_\odot$)', fontsize=18)
         ax[i].set_xticks([-3, -2, -1, 0, 1.])
         ax[i].legend(loc='lower left', bbox_to_anchor= (-0.02, 1.01), ncol=2, 
-                     borderaxespad=0, frameon=False, fontsize=21)
+                     borderaxespad=0, frameon=False, fontsize=15)
+        ax[i].xaxis.set_minor_locator(AutoMinorLocator())
+        ax[i].yaxis.set_minor_locator(AutoMinorLocator())
+        ax[i].tick_params(labelsize=15)
 
-    plt.subplots_adjust(wspace=0.2)   
-    ax[0].set_ylabel(r'N$_{f_{\rm{GW}} \geq 10^{-4} \rm{Hz}}$ (Z) [10$^5$]')
+    ax[0].set_ylabel(r'N$_{f_{\rm{GW}} \geq 10^{-4} \rm{Hz}}$ (Z) [10$^5$]', fontsize=18)
+    plt.tight_layout()
     #ax[0].set_yticks(np.arange(0, 2.5, 0.5));
     #ax[2].set_yticks(np.arange(0, 3.5, 0.5));
-    plt.show(block=False)
-    
+    if save:
+        plt.savefig('N_LISA_vs_met.png', dpi=250)
+    else:
+        plt.show(block=False)
     return 
 
 def make_Mc_fgw_plot(pathtodat, model):
@@ -455,7 +472,7 @@ def make_Mc_fgw_plot(pathtodat, model):
     
     return
 
-def make_Mc_dist_plot_total(pathtodat):
+def make_Mc_dist_plot_total(pathtodat, save=False):
     resolved_dat_FZ = pd.read_hdf(pathtodat+'resolved_DWDs_{}.hdf'.format('FZ'), key='resolved')
     resolved_dat_FZ = resolved_dat_FZ.loc[resolved_dat_FZ.resolved_chirp == 1.0]
     
@@ -477,9 +494,9 @@ def make_Mc_dist_plot_total(pathtodat):
     
     M_c = [utils.chirp_mass(x.mass_1.values*u.M_sun, x.mass_2.values*u.M_sun) for x in [Heplot, COHeplot, COplot, ONeplot]]
     M_c_F50 = [utils.chirp_mass(x.mass_1.values*u.M_sun, x.mass_2.values*u.M_sun) for x in [Heplot_F50, COHeplot_F50, COplot_F50, ONeplot_F50]]
-    fig, ax = plt.subplots(1, 4, figsize=(20,4))
+    fig, ax = plt.subplots(1, 4, figsize=(16,4))
     levels = [0.05, 0.25, 0.50, 0.75, 0.95]
-    label_y = [0.34, 0.48, 0.935, 1.53]
+    label_y = [0.35, 0.49, 0.95, 1.6]
     colors = ['#add0ed', '#2b5d87', '#4288c2', '#17334a']
     labels = ['He + He', 'CO + He', 'CO + CO', 'ONe + X']
     
@@ -489,26 +506,32 @@ def make_Mc_dist_plot_total(pathtodat):
             zorder=3, linewidths=2.5, label='FZ', levels=levels
         )
         sns.kdeplot(
-            x=dist_F50, y=Mc_F50, fill=False, ax=ax[ii], color=colors[3], 
+            x=dist_F50, y=Mc_F50, fill=False, ax=ax[ii], color=colors[1], 
             zorder=3, linewidths=2.5, linestyles='--', label='F50', levels=levels
         )
-        ax[ii].legend(loc=(0, 1.01), prop={'size':20}, ncol=2, frameon=False)
+        ax[ii].legend(loc=(0, 1.01), prop={'size':15}, ncol=2, frameon=False)
     
-    ax[0].set_ylabel('Chirp Mass [M$_\odot$]', fontsize=20)
+    ax[0].set_ylabel('Chirp Mass [M$_\odot$]', fontsize=18)
     for i, name in zip(range(4), labels):
-        ax[i].set_xlabel(r'Distance [kpc]', fontsize=20)
-        ax[i].text(1.0, label_y[i], name, fontsize=18, horizontalalignment='left')
+        ax[i].set_xlabel(r'Distance [kpc]', fontsize=18)
+        ax[i].text(1.8, label_y[i], name, fontsize=18, horizontalalignment='left')
+        ax[i].xaxis.set_minor_locator(AutoMinorLocator())
+        ax[i].yaxis.set_minor_locator(AutoMinorLocator())
+        ax[i].tick_params(labelsize=15)
+
         
     ax[3].set_ylim(0, 1.85)
     for j in range(4):
         ax[j].set_xlim(0, 25)
     
     plt.tight_layout()
-    plt.show(block=False)
-        
+    if save:
+        plt.savefig('Mc_vs_dist.png', dpi=250)
+    else:
+        plt.show(block=False)        
     return
 
-def make_Mc_f_gw_plot_total(pathtodat):
+def make_Mc_f_gw_plot_total(pathtodat, save=False):
     resolved_dat_FZ = pd.read_hdf(pathtodat+'resolved_DWDs_{}.hdf'.format('FZ'), key='resolved')
     resolved_dat_FZ = resolved_dat_FZ.loc[resolved_dat_FZ.resolved_chirp == 1.0]
     
@@ -530,7 +553,7 @@ def make_Mc_f_gw_plot_total(pathtodat):
     
     M_c = [utils.chirp_mass(x.mass_1.values*u.M_sun, x.mass_2.values*u.M_sun) for x in [Heplot, COHeplot, COplot, ONeplot]]
     M_c_F50 = [utils.chirp_mass(x.mass_1.values*u.M_sun, x.mass_2.values*u.M_sun) for x in [Heplot_F50, COHeplot_F50, COplot_F50, ONeplot_F50]]
-    fig, ax = plt.subplots(1, 4, figsize=(20,4))
+    fig, ax = plt.subplots(1, 4, figsize=(16,4))
     levels = [0.05, 0.25, 0.50, 0.75, 0.95]
     label_y = [0.34, 0.48, 0.935, 1.53]
     colors = ['#add0ed', '#2b5d87', '#4288c2', '#17334a']
@@ -542,25 +565,31 @@ def make_Mc_f_gw_plot_total(pathtodat):
             zorder=3, linewidths=2.5, label='FZ', levels=levels
         )
         sns.kdeplot(
-            x=np.log10(f_gw_F50), y=Mc_F50, fill=False, ax=ax[ii], color=colors[3], 
+            x=np.log10(f_gw_F50), y=Mc_F50, fill=False, ax=ax[ii], color=colors[1], 
             zorder=3, linewidths=2.5, linestyles='--', label='F50', levels=levels
         )
-        ax[ii].legend(loc=(0, 1.01), prop={'size':20}, ncol=2, frameon=False)
+        ax[ii].legend(loc=(0, 1.01), prop={'size':15}, ncol=2, frameon=False)
     
-    ax[0].set_ylabel('Chirp Mass [M$_\odot$]', fontsize=20)
+    ax[0].set_ylabel('Chirp Mass [M$_\odot$]', fontsize=18)
     for i, name in zip(range(4), labels):
-        ax[i].set_xlabel(r'Log$_{10}$(f$_{\rm{GW}}$/Hz)', fontsize=20)
-        ax[i].text(-3.2, label_y[i], name, fontsize=18, horizontalalignment='left')
+        ax[i].set_xlabel(r'Log$_{10}$(f$_{\rm{GW}}$/Hz)', fontsize=18)
+        ax[i].text(-3.0, label_y[i], name, fontsize=18, horizontalalignment='left')
+        ax[i].xaxis.set_minor_locator(AutoMinorLocator())
+        ax[i].yaxis.set_minor_locator(AutoMinorLocator())
+        ax[i].tick_params(labelsize=15)
+
         
     ax[3].set_ylim(0, 1.85)
     for j in range(4):
         ax[j].set_xlim(-3.3, -1.25)
     plt.tight_layout()
-    plt.show(block=False)
-        
+    if save:
+        plt.savefig('Mc_vs_fGW.png', dpi=250)
+    else:
+        plt.show(block=False)        
     return
 
-def plot_intersep(Heinter, COHeinter, COinter, ONeinter, whichsep, FIREmin=0.000149, FIREmax=13.3456):
+def plot_intersep(Heinter, COHeinter, COinter, ONeinter, whichsep, FIREmin=0.000149, FIREmax=13.3456, save=False):
     '''
     whichsep must be either "CEsep" or "RLOFsep"
     '''
@@ -650,18 +679,171 @@ def plot_intersep(Heinter, COHeinter, COinter, ONeinter, whichsep, FIREmin=0.000
     for i in range(4):
         #ax[i].set_xscale('log')
         ax[i].set_xticks([-3., -2., -1., 0., 1.])
+        ax[i].tick_params(labelsize=15)
         ax[i].set_xlim(np.log10(met_mids[0]), np.log10(met_mids[-1]))
         ax[i].set_xlabel('Log$_{10}$(Z/Z$_\odot$)', fontsize=18)
         ax[i].legend(loc='lower left', bbox_to_anchor= (0.0, 1.01), ncol=2, borderaxespad=0, frameon=False, 
               fontsize=15, markerscale=0.5)
+        ax[i].xaxis.set_minor_locator(AutoMinorLocator())
+        ax[i].yaxis.set_minor_locator(AutoMinorLocator())
     #ax[0].set_ylabel('Avg. Interaction\nSeparation (10$^3$ R$_\odot$)', fontsize=18)
     ax[0].set_ylabel(r'$\langle a_{\rm{RLOF}}\rangle$ [10$^3$ R$_\odot$]', fontsize=18)
 
-    plt.show(block=False)
-    
+    plt.tight_layout()
+    if save:
+        plt.savefig('a_{}.png'.format(whichsep), dpi=250)
+    else:
+        plt.show(block=False)    
     return
+#
+#def plot_LISAcurves(modelfile):
+#    if Lbandfile == 'FZold':
+#        He = pd.DataFrame()
+#        for f in galaxy_files_10_10_var():
+#            He = He.append(pd.read_hdf(pathtoLband + f, key='Lband'))  
+#        print('finished He + He')
+#        COHe = pd.DataFrame()
+#        for f in galaxy_files_11_10_var():
+#            COHe = COHe.append(pd.read_hdf(pathtoLband + f, key='Lband'))
+#        print('finished CO + He')
+#        CO = pd.DataFrame()
+#        for f in galaxy_files_11_11_var():
+#            CO = CO.append(pd.read_hdf(pathtoLband + f, key='Lband'))
+#        print('finished CO + CO')
+#        ONe = pd.DataFrame()
+#        for f in galaxy_files_12_var():
+#            ONe = ONe.append(pd.read_hdf(pathtoLband + f, key='Lband'))
+#        print('finished ONe + X')
+#    
+#    elif Lbandfile == 'FZnew':
+#        He = pd.DataFrame()
+#        for f in Lband_files_10_10_var():
+#            He = He.append(pd.read_hdf(pathtoLband + f, key='Lband'))
+#        print('finished He + He')
+#        CO = pd.DataFrame()
+#        for f in Lband_files_11_11_var():
+#            CO = CO.append(pd.read_hdf(pathtoLband + f, key='Lband'))
+#        print('finished CO + He')
+#        COHe = pd.DataFrame()
+#        for f in Lband_files_11_10_var():
+#            COHe = COHe.append(pd.read_hdf(pathtoLband + f, key='Lband'))
+#        print('finished CO + CO')
+#        ONe = pd.DataFrame()
+#        for f in Lband_files_12_var():
+#            ONe = ONe.append(pd.read_hdf(pathtoLband + f, key='Lband'))
+#        print('finished ONe + X')
+#
+#    elif Lbandfile == 'F50old':
+#        He = pd.DataFrame()
+#        for f in galaxy_files_10_10_05():
+#            He = He.append(pd.read_hdf(pathtoLband + f, key='Lband'))
+#        print('finished He + He, F50')
+#        COHe = pd.DataFrame()
+#        for f in galaxy_files_11_10_05():
+#            COHe = COHe.append(pd.read_hdf(pathtoLband + f, key='Lband'))
+#        print('finished CO + He, F50')
+#        CO = pd.DataFrame()
+#        for f in galaxy_files_11_11_05():
+#            CO = CO.append(pd.read_hdf(pathtoLband + f, key='Lband'))
+#        print('finished CO + CO, F50')
+#        ONe = pd.DataFrame()
+#        for f in galaxy_files_12_05():
+#            ONe = ONe.append(pd.read_hdf(pathtoLband + f, key='Lband'))
+#        print('finished ONe + X, F50') 
+#
+#    elif Lbandfile == 'F50new':
+#        He = pd.DataFrame()
+#        for f in Lband_files_10_10_05():
+#            He = He.append(pd.read_hdf(pathtoLband + f, key='Lband'))
+#        print('finished He + He, F50')
+#        COHe = pd.DataFrame()
+#        for f in Lband_files_11_10_05():
+#            COHe = COHe.append(pd.read_hdf(pathtoLband + f, key='Lband'))
+#        print('finished CO + He, F50')
+#        CO = pd.DataFrame()
+#        for f in Lband_files_11_11_05():
+#            CO = CO.append(pd.read_hdf(pathtoLband + f, key='Lband'))
+#        print('finished CO + CO, F50')
+#        ONe = pd.DataFrame()
+#        for f in Lband_files_12_05():
+#            ONe = ONe.append(pd.read_hdf(pathtoLband + f, key='Lband'))
+#        print('finished ONe + X, F50')
+#        
+#    from legwork.visualisation import plot_sensitivity_curve
+#    t_obs = 4 * u.yr
+#    Heasd = ((1/4 * t_obs)**(1/2) * He.h_0[He.snr>7].values).to(u.Hz**(-1/2))
+#    COasd = ((1/4 * t_obs)**(1/2) * CO.h_0[CO.snr>7].values).to(u.Hz**(-1/2))
+#    COHeasd = ((1/4 * t_obs)**(1/2) * COHe.h_0[COHe.snr>7].values).to(u.Hz**(-1/2))
+#    ONeasd = ((1/4 * t_obs)**(1/2) * ONe.h_0[ONe.snr>7].values).to(u.Hz**(-1/2))
+#
+#    fig, ax = plt.subplots(1, 4, figsize=(25, 5))
+#    plot_sensitivity_curve(fig=fig, ax=ax[0], show=False, t_obs=t_obs)
+#    ax[0].scatter(COHe.loc[COHe.snr>7].f_gw, COHeasd, zorder=10, color='xkcd:light grey')
+#    ax[0].scatter(CO.loc[CO.snr>7].f_gw, COasd, zorder=10, color='xkcd:light grey')
+#    ax[0].scatter(ONe.loc[ONe.snr>7].f_gw, ONeasd, zorder=10, color='xkcd:light grey')
+#    ax[0].scatter(He.loc[He.snr>7].f_gw, Heasd, zorder=10, color='xkcd:tomato red', label='He + He')
+#    ax[0].legend(loc='lower left', bbox_to_anchor= (0.0, 1.01), ncol=4, borderaxespad=0, frameon=False, 
+#              fontsize=20, markerscale=2)
+#    ax[0].text(0.75, 0.8, 'SNR > 7: {}\nf$_b$=f$_b$(Z)'.format(len(Heasd)), fontsize=20, transform=ax[0].transAxes,
+#              horizontalalignment='center')
+#    ax[0].set_xlim(4e-5, 5e-1)
+#    ax[0].set_ylim(top=1e-15)
+#    ax[0].tick_params(labelsize=20)
+#
+#    plot_sensitivity_curve(fig=fig, ax=ax[2], show=False, t_obs=t_obs)
+#    ax[2].scatter(COHe.loc[COHe.snr>7].f_gw, COHeasd, zorder=10, color='xkcd:light grey')
+#    ax[2].scatter(ONe.loc[ONe.snr>7].f_gw, ONeasd, zorder=10, color='xkcd:light grey')
+#    ax[2].scatter(He.loc[He.snr>7].f_gw, Heasd, zorder=10, color='xkcd:light grey')
+#    ax[2].scatter(CO.loc[CO.snr>7].f_gw, COasd, zorder=10, color='xkcd:pink', label='CO + CO')
+#    ax[2].legend(loc='lower left', bbox_to_anchor= (0.0, 1.01), ncol=4, borderaxespad=0, frameon=False, 
+#              fontsize=20, markerscale=2)
+#    ax[2].text(0.75, 0.8, 'SNR > 7: {}\nf$_b$=f$_b$(Z)'.format(len(COasd)), fontsize=20, 
+#               transform=ax[2].transAxes, horizontalalignment='center')
+#    ax[2].set_xlim(4e-5, 5e-1)
+#    ax[2].set_ylim(top=1e-15)
+#    ax[2].tick_params(labelsize=20)
+#    ax[2].set_ylabel('')
+#    ax[2].set_yticks([])
+#
+#    plot_sensitivity_curve(fig=fig, ax=ax[1], show=False, t_obs=t_obs)
+#    ax[1].scatter(ONe.loc[ONe.snr>7].f_gw, ONeasd, zorder=10, color='xkcd:light grey')
+#    ax[1].scatter(He.loc[He.snr>7].f_gw, Heasd, zorder=10, color='xkcd:light grey')
+#    ax[1].scatter(CO.loc[CO.snr>7].f_gw, COasd, zorder=10, color='xkcd:light grey')
+#    ax[1].scatter(COHe.loc[COHe.snr>7].f_gw, COHeasd, zorder=10, color='xkcd:blurple', label='CO + He')
+#    ax[1].legend(loc='lower left', bbox_to_anchor= (0.0, 1.01), ncol=4, borderaxespad=0, frameon=False, 
+#              fontsize=20, markerscale=2)
+#    ax[1].text(0.75, 0.8, 'SNR > 7: {}\nf$_b$=f$_b$(Z)'.format(len(COHeasd)), fontsize=20, transform=ax[1].transAxes,
+#              horizontalalignment='center')
+#    ax[1].set_xlim(4e-5, 5e-1)
+#    ax[1].set_ylim(top=1e-15)
+#    ax[1].tick_params(labelsize=20)
+#    ax[1].set_ylabel('')
+#    ax[1].set_yticks([])
+#
+#    plot_sensitivity_curve(fig=fig, ax=ax[3], show=False, t_obs=t_obs)
+#    ax[3].scatter(He.loc[He.snr>7].f_gw, Heasd, zorder=10, color='xkcd:light grey')
+#    ax[3].scatter(CO.loc[CO.snr>7].f_gw, COasd, zorder=10, color='xkcd:light grey')
+#    ax[3].scatter(COHe.loc[COHe.snr>7].f_gw, COHeasd, zorder=10, color='xkcd:light grey')
+#    ax[3].scatter(ONe.loc[ONe.snr>7].f_gw, ONeasd, zorder=10, color='xkcd:light blue', label='ONe + X')
+#    ax[3].legend(loc='lower left', bbox_to_anchor= (0.0, 1.01), ncol=4, borderaxespad=0, frameon=False, 
+#              fontsize=20, markerscale=2)
+#    ax[3].text(0.75, 0.8, 'SNR > 7: {}\nf$_b$=f$_b$(Z)'.format(len(ONeasd)), fontsize=20, 
+#               transform=ax[3].transAxes, horizontalalignment='center')
+#    ax[3].set_xlim(4e-5, 5e-1)
+#    ax[3].set_ylim(top=1e-15)
+#    ax[3].tick_params(labelsize=20)
+#    ax[3].set_ylabel('')
+#    ax[3].set_yticks([])
+#
+#    plt.subplots_adjust(wspace=0.01)
+#    for i in range(4):
+#        ax[i].set_xticks([])
+#        ax[i].set_xticklabels('')
+#        ax[i].set_xlabel('')
+#    plt.show()
+#    return
 
-def plot_LISAcurves(pathtodat, model):
+def plot_LISAcurves(pathtodat, model, save=False):
     from legwork.visualisation import plot_sensitivity_curve
     
     def func(x, a, b, c, d, e):
@@ -743,20 +925,23 @@ def plot_LISAcurves(pathtodat, model):
     ax[3].scatter(resolved_ONeX.f_gw, ONeasd, zorder=10, color='xkcd:light blue', label='ONe + X')
     ax[3].legend(loc='lower left', ncol=4, borderaxespad=0, frameon=False, 
                  fontsize=20, markerscale=2)
-    ax[3].text(0.1, 3e-17, model+', SNR > 7: {}'.format(len(ONeasd)), fontsize=20, 
+    ax[3].text(0.1, 3e-17, model+', SNR > 7: {}'.format(len(ONeasd)), fontsize=22, 
                horizontalalignment='right')
     
     for i in range(4):
         ax[i].set_yscale('log')
         ax[i].set_xscale('log')
         ax[i].tick_params(labelsize=20)
-        ax[i].set_xlabel(r'$f_{\rm{GW}}$ [Hz])')
-    ax[0].set_ylabel(r'ASD [Hz$^{-1/2}$]')
+        ax[i].set_xlabel(r'$f_{\rm{GW}}$ [Hz]', size=24)
+    ax[0].set_ylabel(r'ASD [Hz$^{-1/2}$]', size=24)
     plt.tight_layout()
-    plt.show()
+    if save:
+        plt.savefig('LISA_SNR_{}.png'.format(model), dpi=250)
+    else:
+        plt.show()
     return
 
-def plot_foreground(pathtodat):
+def plot_foreground(pathtodat, save=False):
     def func(x, a, b, c, d, e):
         return a + b*x + c*x**2 + d*x**3 + e*x**4
     
@@ -782,7 +967,7 @@ def plot_foreground(pathtodat):
     )* Tobs.to(u.s).value
 
     
-    fig, (ax1) = plt.subplots(1, 1, figsize=(6,4.5))
+    fig, (ax1) = plt.subplots(1, 1, figsize=(6, 4.2))
     plt.plot(power_dat_F50.f_gw[::10], power_dat_F50.strain_2[::10] * Tobs.to(u.s).value, c=colors[1], lw=1, alpha=1, rasterized=False)#, ls='none', marker=',')
     
     plt.plot(power_dat_FZ.f_gw[::10], power_dat_FZ.strain_2[::10] * Tobs.to(u.s).value, c=colors[0], lw=1, alpha=0.8, rasterized=False)#, ls='none', marker=',')
@@ -792,23 +977,46 @@ def plot_foreground(pathtodat):
     plt.xscale('log')
     plt.yscale('log')
     
-    ax1.set_ylabel(r'Power Spectral Density [Hz$^{-1}$]', size=14)
-    ax1.set_xlabel(r'GW Frequency [Hz]', size=14)
-    
+    ax1.set_ylabel(r'PSD [Hz$^{-1}$]', size=15)
+    ax1.set_xlabel(r'f$_{\rm{GW}}$ [Hz]', size=15)
+    ax1.tick_params(labelsize=12)
+    ax1.set_yticks([1e-38, 1e-37, 1e-36, 1e-35, 1e-34])
     plt.xlim(1e-4, 3e-2)
     plt.ylim(1e-38, 5e-34)
     plt.legend(prop={'size': 12}, ncol=2, frameon=False, loc=(0, 1))
     plt.tight_layout()
-    plt.savefig('PSD.png', facecolor='white', dpi=200)
-    
+    if save:
+        plt.savefig('PSD.png', facecolor='white', dpi=250)
+    else:
+        plt.show()
     return
     
-def plot_model_var(pathtodat):
+def plot_model_var(pathtodat, save=False):
     models = ['log_uniform', 'qcflag_4', 'alpha_0.25', 'alpha_5']
-    model_names = ['Standard', 'StarTrack qcrit', r'Standard, $\alpha=0.25$', r'Standard, $\alpha=5$']
-
+    model_names = ['fiducial', r'q3', r'$\alpha25$', r'$\alpha5$']
+    colors = sns.color_palette("mako", n_colors=len(models))
+    
+    Tobs = 4 * u.yr
+    
+    def func(x, a, b, c, d, e):
+        return a + b*x + c*x**2 + d*x**3 + e*x**4
+    
+    mosaic = """
+    AA
+    AA
+    BB
+    """
+    
+    fig = plt.figure(figsize=(6, 8))
+    ax_dict = fig.subplot_mosaic(mosaic)
+    
+    
     lisa_ratio = []
     n_lisa_F50_list = []
+    
+    popt_F50_list = []
+    popt_FZ_list = []
+    
     for m in models:
         path = pathtodat+m+'/plot_data/'
         n_lisa_F50 = pd.read_hdf(path+'numLISA_30bins_F50.hdf', key='data')
@@ -818,18 +1026,236 @@ def plot_model_var(pathtodat):
         
         lisa_ratio.append(n_lisa_FZ/n_lisa_F50)
         n_lisa_F50_list.append(n_lisa_F50)
-        
-    fig, (ax1) = plt.subplots(1, 1, figsize=(5,4))
-    ax1.scatter(np.array(n_lisa_F50_list), lisa_ratio)
-    ax1.set_xscale('log')
-    ax1.axhline(0.5, ls='--', color='silver', lw=2, zorder=0)
-    ax1.set_ylim(0.2, 0.8) 
-    ax1.set_xlim(1e5, 1e8)
-    ax1.set_ylabel(r'N$_{\rm{LISA, FZ}}$/N$_{\rm{LISA, F50}}$')
-    ax1.set_xlabel(r'N$_{\rm{LISA, F50}}$')
-    plt.tight_layout()
-    plt.show()
     
+        popt_F50 = pd.read_hdf(path+'resolved_DWDs_{}.hdf'.format('F50'), key='conf_fit')
+        popt_F50 = popt_F50.values.flatten()
+        popt_FZ = pd.read_hdf(path+'resolved_DWDs_{}.hdf'.format('FZ'), key='conf_fit')
+        popt_FZ = popt_FZ.values.flatten()
+                
+        popt_F50_list.append(popt_F50)
+        popt_FZ_list.append(popt_FZ)
+    
+            
+    for popt_F50, popt_FZ, ii in zip(popt_F50_list, popt_FZ_list, range(len(popt_FZ_list))):
+        conf_fit_FZ = 10**func(
+            x=np.log10(np.linspace(1e-4, 1e-1, 100000)), 
+            a=popt_FZ[0], b=popt_FZ[1], c=popt_FZ[2], d=popt_FZ[3], e=popt_FZ[4]
+        )* Tobs.to(u.s).value
+        
+        conf_fit_F50 = 10**func(
+            x=np.log10(np.linspace(1e-4, 1e-1, 100000)), 
+            a=popt_F50[0], b=popt_F50[1], c=popt_F50[2], d=popt_F50[3], e=popt_F50[4]
+        )* Tobs.to(u.s).value
+        
+        ax_dict['A'].plot(
+            np.linspace(1e-4, 1e-1, 100000), conf_fit_F50, color=colors[ii], ls='--', lw=2.5, zorder=10-ii
+        )
+        ax_dict['A'].plot(
+            np.linspace(1e-4, 1e-1, 100000), conf_fit_FZ, color=colors[ii], ls='-', lw=2.5, label=model_names[ii]
+        )
+    
+    
+    
+    ax_dict['A'].set_xscale('log')
+    ax_dict['A'].set_yscale('log')
+    
+    ax_dict['A'].set_ylabel(r'confusion fit [Hz$^{-1}$]', size=16)
+    ax_dict['A'].set_xlabel(r'f$_{\rm{GW}}$ [Hz]', size=16)
+    ax_dict['A'].set_xlim(1e-4, 3.5e-3)
+    ax_dict['A'].set_ylim(1e-38, 7e-35)
+    
+    
+    for ii in range(len(lisa_ratio)):
+        ax_dict['B'].scatter(n_lisa_F50_list[ii], lisa_ratio[ii], color=colors[ii], marker='s', s=45, label=model_names[ii])
+    ax_dict['A'].legend(prop={'size' : 12}, frameon=False, loc='upper right')
+    ax_dict['B'].set_xscale('log')
+    ax_dict['B'].axhline(0.5, ls='--', color='silver', lw=2, zorder=0)
+    ax_dict['B'].set_ylim(0.2, 0.8) 
+    ax_dict['B'].set_xlim(3e5, 1e8)
+    ax_dict['B'].set_ylabel(r'N$_{\rm{LISA, FZ}}$/N$_{\rm{LISA, F50}}$', size=16)
+    ax_dict['B'].set_xlabel(r'N$_{\rm{LISA, F50}}$', size=16)
+    ax_dict['A'].tick_params(labelsize=12)
+    ax_dict['B'].tick_params(labelsize=12)
+    plt.tight_layout()
+    if save:
+        plt.savefig('model_comp.png', dpi=250, facecolor='white')
+    else:
+        plt.show()        
     return
     
             
+        
+def plot_model_var_2(pathtodat, save=False):
+    models = ['log_uniform', 'qcflag_4', 'alpha_0.25']#, 'alpha_5']
+    model_names = [r'fiducial, N$_{\rm{LISA}}$=1.24e7', r'q3, N$_{\rm{LISA}}$=4.28e7', r'$\alpha25$, N$_{\rm{LISA}}$=5.58e5']#, r'Standard, $\alpha5$']
+    colors = sns.color_palette("mako", n_colors=len(models))
+    
+    Tobs = 4 * u.yr
+    
+    def func(x, a, b, c, d, e):
+        return a + b*x + c*x**2 + d*x**3 + e*x**4
+    
+    mosaic = """
+    AA
+    AA
+    BB
+    """
+    
+    fig = plt.figure(figsize=(6, 8))
+    ax_dict = fig.subplot_mosaic(mosaic)
+    
+    
+    lisa_ratio = []
+    n_lisa_F50_list = []
+    
+    popt_F50_list = []
+    popt_FZ_list = []
+    
+    for m in models:
+        path = pathtodat+m+'/plot_data/'
+        n_lisa_F50 = pd.read_hdf(path+'numLISA_30bins_F50.hdf', key='data')
+        n_lisa_FZ = pd.read_hdf(path+'numLISA_30bins_FZ.hdf', key='data')
+        n_lisa_F50 = np.sum(n_lisa_F50.values.flatten())
+        n_lisa_FZ = np.sum(n_lisa_FZ.values.flatten())
+        
+        lisa_ratio.append(n_lisa_FZ/n_lisa_F50)
+        n_lisa_F50_list.append(n_lisa_F50)
+    
+        popt_F50 = pd.read_hdf(path+'resolved_DWDs_{}.hdf'.format('F50'), key='conf_fit')
+        popt_F50 = popt_F50.values.flatten()
+        popt_FZ = pd.read_hdf(path+'resolved_DWDs_{}.hdf'.format('FZ'), key='conf_fit')
+        popt_FZ = popt_FZ.values.flatten()
+                
+        popt_F50_list.append(popt_F50)
+        popt_FZ_list.append(popt_FZ)
+    
+            
+    for popt_F50, popt_FZ, ii in zip(popt_F50_list, popt_FZ_list, range(len(popt_FZ_list))):
+        conf_fit_FZ = 10**func(
+            x=np.log10(np.linspace(1e-4, 1e-1, 100000)), 
+            a=popt_FZ[0], b=popt_FZ[1], c=popt_FZ[2], d=popt_FZ[3], e=popt_FZ[4]
+        )* Tobs.to(u.s).value
+        
+        conf_fit_F50 = 10**func(
+            x=np.log10(np.linspace(1e-4, 1e-1, 100000)), 
+            a=popt_F50[0], b=popt_F50[1], c=popt_F50[2], d=popt_F50[3], e=popt_F50[4]
+        )* Tobs.to(u.s).value
+        
+        ax_dict['A'].plot(
+            np.linspace(1e-4, 1e-1, 100000), conf_fit_F50, color=colors[ii], ls='--', lw=2, label=model_names[ii]
+        )
+        ax_dict['A'].plot(
+            np.linspace(1e-4, 1e-1, 100000), conf_fit_FZ, color=colors[ii], ls='-', lw=2
+        )
+        
+        ax_dict['B'].plot(
+            np.linspace(1e-4, 1e-1, 100000), np.abs(conf_fit_FZ - conf_fit_F50)/(conf_fit_F50), color=colors[ii], ls='--', lw=2, label=model_names[ii]
+        )
+    
+    
+    ax_dict['A'].set_xscale('log')
+    ax_dict['A'].set_yscale('log')
+    
+    ax_dict['A'].set_ylabel(r'confusion fit [Hz$^{-1}$]', size=16)
+    ax_dict['A'].set_xlim(1e-4, 5e-3)
+    ax_dict['A'].set_ylim(1e-38, 7e-35)
+    ax_dict['A'].set_xticklabels([])
+    
+        
+    ax_dict['A'].legend(prop={'size' : 12}, frameon=False, loc='upper right')
+    ax_dict['B'].set_xscale('log')
+    ax_dict['B'].set_xlim(1e-4, 5e-3)
+    ax_dict['B'].set_ylabel(r'conf$_{\rm{FZ}}$/conf$_{\rm{F50}}$', size=16)
+    ax_dict['B'].set_xlabel(r'$f_{\rm{GW}}$ [Hz]', size=16)
+    ax_dict['A'].tick_params(labelsize=12)
+    ax_dict['B'].tick_params(labelsize=12)
+    plt.tight_layout()
+    plt.savefig('conf_ratio.png', facecolor='white', dpi=200)
+    
+    return
+
+def plot_model_var_conf(pathtodat, models, model_names):
+    Tobs = 4 * u.yr
+    colors = sns.color_palette("mako", n_colors=len(models))
+
+    def func(x, a, b, c, d, e):
+        return a + b*x + c*x**2 + d*x**3 + e*x**4
+
+    mosaic = """
+    AA
+    AA
+    BB
+    """
+
+    fig = plt.figure(figsize=(6, 8))
+    ax_dict = fig.subplot_mosaic(mosaic)
+
+
+    lisa_ratio = []
+    n_lisa_F50_list = []
+
+    popt_F50_list = []
+    popt_FZ_list = []
+
+    for m in models:
+        path = pathtodat+m+'/plot_data/'
+        n_lisa_F50 = pd.read_hdf(path+'numLISA_30bins_F50.hdf', key='data')
+        n_lisa_FZ = pd.read_hdf(path+'numLISA_30bins_FZ.hdf', key='data')
+        n_lisa_F50 = np.sum(n_lisa_F50.values.flatten())
+        n_lisa_FZ = np.sum(n_lisa_FZ.values.flatten())
+
+        lisa_ratio.append(n_lisa_FZ/n_lisa_F50)
+        n_lisa_F50_list.append(n_lisa_F50)
+
+        popt_F50 = pd.read_hdf(path+'resolved_DWDs_{}.hdf'.format('F50'), key='conf_fit')
+        popt_F50 = popt_F50.values.flatten()
+        popt_FZ = pd.read_hdf(path+'resolved_DWDs_{}.hdf'.format('FZ'), key='conf_fit')
+        popt_FZ = popt_FZ.values.flatten()
+
+        popt_F50_list.append(popt_F50)
+        popt_FZ_list.append(popt_FZ)
+
+
+    for popt_F50, popt_FZ, ii in zip(popt_F50_list, popt_FZ_list, range(len(popt_FZ_list))):
+        conf_fit_FZ = 10**func(
+            x=np.log10(np.linspace(1e-4, 1e-1, 100000)), 
+            a=popt_FZ[0], b=popt_FZ[1], c=popt_FZ[2], d=popt_FZ[3], e=popt_FZ[4]
+        )* Tobs.to(u.s).value
+
+        conf_fit_F50 = 10**func(
+            x=np.log10(np.linspace(1e-4, 1e-1, 100000)), 
+            a=popt_F50[0], b=popt_F50[1], c=popt_F50[2], d=popt_F50[3], e=popt_F50[4]
+        )* Tobs.to(u.s).value
+
+        ax_dict['A'].plot(
+            np.linspace(1e-4, 1e-1, 100000), conf_fit_F50, color=colors[ii], ls='--', lw=2, label=model_names[ii]
+        )
+        ax_dict['A'].plot(
+            np.linspace(1e-4, 1e-1, 100000), conf_fit_FZ, color=colors[ii], ls='-', lw=2
+        )
+
+        ax_dict['B'].plot(
+            np.linspace(1e-4, 1e-1, 100000), np.abs(conf_fit_FZ - conf_fit_F50)/(conf_fit_F50), color=colors[ii], ls='--', lw=2, label=model_names[ii]
+        )
+
+
+    ax_dict['A'].set_xscale('log')
+    ax_dict['A'].set_yscale('log')
+
+    ax_dict['A'].set_ylabel(r'confusion fit [Hz$^{-1}$]', size=16)
+    ax_dict['A'].set_xlim(1e-4, 5e-3)
+    ax_dict['A'].set_ylim(1e-38, 7e-35)
+    ax_dict['A'].set_xticklabels([])
+
+
+    ax_dict['A'].legend(prop={'size' : 12}, frameon=False, loc='upper right')
+    ax_dict['B'].set_xscale('log')
+    ax_dict['B'].set_xlim(1e-4, 5e-3)
+    ax_dict['B'].set_ylabel(r'conf$_{\rm{FZ}}$/conf$_{\rm{F50}}$', size=16)
+    ax_dict['B'].set_xlabel(r'$f_{\rm{GW}}$ [Hz]', size=16)
+    ax_dict['A'].tick_params(labelsize=12)
+    ax_dict['B'].tick_params(labelsize=12)
+    plt.tight_layout()
+    plt.savefig('conf_ratio.png', facecolor='white', dpi=200)
+    plt.show(block=False)
+    return
