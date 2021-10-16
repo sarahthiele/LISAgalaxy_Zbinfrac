@@ -469,8 +469,6 @@ def filter_population(dat):
         pop_init = pd.DataFrame()
         LISA_band = LISA_band.join(LISA_band.groupby('bin_num')['bin_num'].size(), 
                                    on='bin_num', rsuffix='_Lw')
-        if verbose:
-            print('got LISA band and added weight column')
             
         return LISA_band
     
