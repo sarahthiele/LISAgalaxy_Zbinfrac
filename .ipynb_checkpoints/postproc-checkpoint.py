@@ -534,8 +534,7 @@ def make_galaxy(dat, verbose=False):
     final_params = ['bin_num','mass_1','mass_2','kstar_1','kstar_2','sep','met',
                         'tphys','rad_1','rad_2','xGx','yGx','zGx','FIRE_index','f_gw',
                         'dist_sun']
-    d0 = pd.DataFrame()
-    d0.columns = final_params
+    d0 = pd.DataFrame(columns=final_params)
     d0.to_hdf(pathtosave + savefile, key='Lband', format='t', append=True)
     
     # Get DWD formatioon efficiency and number of binaries per star particle
