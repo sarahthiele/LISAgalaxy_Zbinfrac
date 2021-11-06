@@ -567,6 +567,10 @@ def make_galaxy(dat, verbose=False):
     # systems added from the decimal component of N_astro
     dat = [pop_init_dec[params_list], i, label, ratio, binfrac, pathtosave, interfile]
     LISA_band = filter_population(dat)
+    final_params = ['bin_num','mass_1','mass_2','kstar_1','kstar_2','sep','met',
+                        'tphys','rad_1','rad_2','xGx','yGx','zGx','FIRE_index','f_gw',
+                        'dist_sun']
+    LISA_band = LISA_band[final_params]
 
     if len(LISA_band) > 0:
         savefile = 'Lband_{}_{}_{}.hdf'.format(label, met_arr[i+1], binfrac)
@@ -594,9 +598,6 @@ def make_galaxy(dat, verbose=False):
         FIRE_int = pd.DataFrame()
         dat = [pop_init_int[params_list], i, label, ratio, binfrac, pathtosave, interfile]
         LISA_band = filter_population(dat)
-        final_params = ['bin_num','mass_1','mass_2','kstar_1','kstar_2','sep','met',
-                        'tphys','rad_1','rad_2','xGx','yGx','zGx','FIRE_index','f_gw',
-                        'dist_sun']
         LISA_band = LISA_band[final_params]
         
         if len(LISA_band) > 0:
