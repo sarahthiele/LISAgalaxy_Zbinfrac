@@ -3,7 +3,6 @@
 # found in Thiele et al. (2021). In order to run this script, the DWD
 # populations must have already been created using createMW.py 
 #
-# Authors: Katelyn brerivik and Sarah Thiele
 # Last updated: Oct 14th, 2021
 #=========================================================================
 
