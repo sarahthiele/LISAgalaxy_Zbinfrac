@@ -535,6 +535,7 @@ def make_galaxy(dat, verbose=False):
                         'tphys','rad_1','rad_2','xGx','yGx','zGx','FIRE_index','f_gw',
                         'dist_sun']
     d0 = pd.DataFrame(columns=final_params)
+    savefile = 'Lband_{}_{}_{}.hdf'.format(label, met_arr[i+1], binfrac)
     d0.to_hdf(pathtosave + savefile, key='Lband', format='t', append=True)
     
     # Get DWD formatioon efficiency and number of binaries per star particle
@@ -577,7 +578,6 @@ def make_galaxy(dat, verbose=False):
     LISA_band = LISA_band[final_params]
 
     if len(LISA_band) > 0:
-        savefile = 'Lband_{}_{}_{}.hdf'.format(label, met_arr[i+1], binfrac)
         LISA_band.to_hdf(pathtosave + savefile, key='Lband', format='t', append=True)
     
     # now sampling by tthe integer number of systems per star particle:
@@ -605,7 +605,6 @@ def make_galaxy(dat, verbose=False):
         LISA_band = LISA_band[final_params]
         
         if len(LISA_band) > 0:
-            savefile = 'Lband_{}_{}_{}.hdf'.format(label, met_arr[i+1], binfrac)
             LISA_band.to_hdf(pathtosave + savefile, key='Lband', format='t', append=True)
     
     elif N_sample_int > Nsamp_split:
@@ -635,7 +634,6 @@ def make_galaxy(dat, verbose=False):
             LISA_band_list = list(pool.map(filter_population, dat_filter))
         
         for LISA_band in LISA_band_list:
-            savefile = 'Lband_{}_{}_{}.hdf'.format(label, met_arr[i+1], binfrac)
             LISA_band.to_hdf(pathtosave + savefile, key='Lband', format='t', append=True)    
        
     if N != N_sample_int:
