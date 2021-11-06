@@ -530,6 +530,14 @@ def make_galaxy(dat, verbose=False):
     mass_total.to_hdf(pathtosave+'Lband_{}_{}_{}.hdf'.format(label, met_arr[i+1], 
                                                   binfrac), key='mass_total')
     
+    # Set up LISAband key to append to:
+    final_params = ['bin_num','mass_1','mass_2','kstar_1','kstar_2','sep','met',
+                        'tphys','rad_1','rad_2','xGx','yGx','zGx','FIRE_index','f_gw',
+                        'dist_sun']
+    d0 = pd.DataFrame()
+    d0.columns = final_params
+    d0.to_hdf(pathtosave + savefile, key='Lband', format='t', append=True)
+    
     # Get DWD formatioon efficiency and number of binaries per star particle
     DWD_per_mass = len(conv) / mass_total
     N_astro = DWD_per_mass * M_astro
@@ -567,9 +575,6 @@ def make_galaxy(dat, verbose=False):
     # systems added from the decimal component of N_astro
     dat = [pop_init_dec[params_list], i, label, ratio, binfrac, pathtosave, interfile]
     LISA_band = filter_population(dat)
-    final_params = ['bin_num','mass_1','mass_2','kstar_1','kstar_2','sep','met',
-                        'tphys','rad_1','rad_2','xGx','yGx','zGx','FIRE_index','f_gw',
-                        'dist_sun']
     LISA_band = LISA_band[final_params]
 
     if len(LISA_band) > 0:
