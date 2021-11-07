@@ -634,8 +634,8 @@ def make_galaxy(dat, verbose=False):
             LISA_band_list = list(pool.map(filter_population, dat_filter))
         
         for LISA_band in LISA_band_list:
-            LISA_band = LISA_band[final_params]
-            LISA_band.to_hdf(pathtosave + savefile, key='Lband', format='t', append=True)    
+            LISAband = LISA_band[final_params]
+            LISAband.to_hdf(pathtosave + savefile, key='Lband', format='t', append=True)    
        
     if N != N_sample_int:
         print('loop is incorrect')
