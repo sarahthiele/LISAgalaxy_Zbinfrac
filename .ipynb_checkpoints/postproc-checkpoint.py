@@ -575,9 +575,9 @@ def make_galaxy(dat, verbose=False):
     # systems added from the decimal component of N_astro
     dat = [pop_init_dec[params_list], i, label, ratio, binfrac, pathtosave, interfile]
     LISA_band = filter_population(dat)
-    LISA_band = LISA_band[final_params]
 
     if len(LISA_band) > 0:
+        LISA_band = LISA_band[final_params]
         LISA_band.to_hdf(pathtosave + savefile, key='Lband', format='t', append=True)
     
     # now sampling by tthe integer number of systems per star particle:
@@ -602,9 +602,9 @@ def make_galaxy(dat, verbose=False):
         FIRE_int = pd.DataFrame()
         dat = [pop_init_int[params_list], i, label, ratio, binfrac, pathtosave, interfile]
         LISA_band = filter_population(dat)
-        LISA_band = LISA_band[final_params]
         
         if len(LISA_band) > 0:
+            LISA_band = LISA_band[final_params]
             LISA_band.to_hdf(pathtosave + savefile, key='Lband', format='t', append=True)
     
     elif N_sample_int > Nsamp_split:
@@ -634,8 +634,8 @@ def make_galaxy(dat, verbose=False):
             LISA_band_list = list(pool.map(filter_population, dat_filter))
         
         for LISA_band in LISA_band_list:
-            LISAband = LISA_band[final_params]
-            LISAband.to_hdf(pathtosave + savefile, key='Lband', format='t', append=True)    
+            LISA_band = LISA_band[final_params]
+            LISA_band.to_hdf(pathtosave + savefile, key='Lband', format='t', append=True)    
        
     if N != N_sample_int:
         print('loop is incorrect')
