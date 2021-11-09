@@ -473,6 +473,8 @@ def filter_population(dat):
         return LISA_band
     
 def make_galaxy(dat, verbose=False):
+    import pdb
+    pdb.set_trace()
     '''
     Creates populations of DWDs orbiting in the LISA band for a given
     DWD type and metallicity.
@@ -514,6 +516,16 @@ def make_galaxy(dat, verbose=False):
     
     # Load DWD data at formation of the second DWD component
     conv = pd.read_hdf(pathtodat+filename, key='conv')
+    
+    # load key evolution points in DWD formation
+    bpp = pd.read_hdf(pathtodat+filename, key='bpp')
+
+    # Load DWD data at formation of the second DWD component
+    conv = pd.read_hdf(pathtodat+filename, key='conv')
+
+    # retrieve close binaries (i.e. P<1e4 days)
+    initporbs = bpp.groupby('bin_num').first().porb
+    conv = conv.loc[conv.bin_num.isin(initporbs.loc[initporbs<1e4].index)]
     
     # overwrite COSMIC radii
     conv['rad_1'] = rad_WD(conv.mass_1.values)
@@ -790,8 +802,125 @@ def get_formeff(pathtodat, pathtoLband, pathtosave, getfrom='Lband'):
     
     return
 
-
 def get_interactionsep(pathtodat, pathtoLband, pathtosave, verbose=False):
+    '''
+    Creates plot files with the interaction separation of DWDs. In order to
+    run this, there must be already-existing LISA band files created with
+    make_galaxy() at pathtoLband.
+    
+    INPUTS
+    ----------------------
+    pathtodat [str]: path to folder containing datfiles 
+    pathtoLband [str]: path to folder containing LISA band files
+    pathtosave [str]: path to folder to save data to
+    
+    RETURNS
+    ----------------------
+    No direct function outputs, but saves interraction separation data for all
+    DWD types and metallicity bins to files contained in pathtosave.
+    '''
+    def intersep(pathtodat, datfile, pathtoLband, fsave, i, label, binfrac, verbose=verbose):
+        import pdb
+        #pdb.set_trace()
+        data = pd.DataFrame() 
+        columns=['bin_num', 'FIRE_index', 'met', 'rad_1', 'rad_2', 'CEsep', 'CEtime', 'RLOFsep', 'RLOFtime'] 
+        data.to_hdf(fsave, key='data', format='t', append=True) 
+
+        if verbose:
+            print('\n{}'.format(i))
+
+        Z = met_arr[i+1] 
+
+        if verbose:
+            print('Z: ', Z) 
+            print('binfrac: ', binfrac) 
+
+        Lbandfile = pathtoLband + 'Lband_{}_{}_{}.hdf'.format(label, Z, binfrac)
+        if verbose:
+            print('Lbandfile: ' + Lbandfile)
+        try:
+            Lband = pd.read_hdf(Lbandfile, key='Lband').sort_values('bin_num') 
+            data = Lband[['bin_num', 'FIRE_index', 'met', 'rad_1', 'rad_2']] 
+    
+            if verbose:
+                print('dat file: ' + datfile)
+            dat = pd.read_hdf(pathtodat+datfile, key='bpp') 
+            #dat['bin_num'] = dat.index.values
+            dat = dat[['tphys', 'evol_type', 'sep']]
+    
+            RLOFsep = dat.loc[dat.evol_type==3].groupby('bin_num', as_index=True).first()
+            RLOFsep['bin_num'] = RLOFsep.index.values
+            RLOFsep = RLOFsep.loc[RLOFsep.bin_num.isin(data.bin_num)]
+            data_RLOF = data.loc[data.bin_num.isin(RLOFsep.bin_num)]
+            RLOFsep['weights'] = data_RLOF.bin_num.value_counts().sort_index().values
+            
+            CEsep = dat.loc[dat.evol_type==7].groupby('bin_num', as_index=True).first()
+            CEsep['bin_num'] = CEsep.index.values
+            CEsep = CEsep.loc[CEsep.bin_num.isin(data.bin_num)]
+            data_CE = data.loc[data.bin_num.isin(CEsep.bin_num)]
+            CEsep['weights'] = data_CE.bin_num.value_counts().sort_index().values
+    
+            dat = []
+            data_RLOF = []
+            data_CE = []
+    
+            data['CEsep'] = np.repeat(CEsep['sep'], CEsep['weights']).values
+            data['CEtime'] = np.repeat(CEsep['tphys'], CEsep['weights']).values
+            data['RLOFsep'] = np.repeat(RLOFsep['sep'], RLOFsep['weights']).values
+            data['RLOFtime'] = np.repeat(RLOFsep['tphys'], RLOFsep['weights']).values
+    
+            Ntot = len(data) 
+            
+            if verbose:
+                print('Ntot: ', Ntot) 
+            N = 0 
+            j = 0 
+            jlast = int(1e5) 
+            while j < Ntot: 
+                if verbose:
+                    print('j: ', j) 
+                    print('jlast: ', jlast) 
+                data[j:jlast].to_hdf(fsave, key='data', format='t', append=True) 
+                N += len(data[j:jlast]) 
+                j += 1e5 
+                j = int(j) 
+                jlast += 1e5 
+                if jlast > Ntot: 
+                    jlast = Ntot 
+                jlast = int(jlast) 
+            if verbose:
+                if N != Ntot: 
+                    print('loop is wrong') 
+                else: 
+                    print('wrote to hdf successfully') 
+    
+            return
+        except:
+            return
+
+    # FZ:
+    kstar1_list = ['10', '11', '11', '12']
+    kstar2_list = ['10', '10', '11', '10_12']
+    for kstar1, kstar2 in zip(kstar1_list, kstar2_list):
+        files, label = dutil.getfiles(kstar1, kstar2)
+        for f, i in tqdm.tqdm(zip(files, range(len(files))), total=len(files)):
+            if verbose:
+                print('i = {}'.format(i))
+            binfrac = binfracs[i]
+            met = met_arr[i+1]
+            fsave = pathtosave+'{}_intersep_FZ.hdf'.format(label)
+            intersep(pathtodat, f, pathtoLband, fsave, i, label, binfrac, verbose)
+            
+            if verbose:
+                print('i = {}'.format(i))
+            binfrac = 0.5
+            met = met_arr[i+1]
+            fsave = pathtosave+'{}_intersep_F50.hdf'.format(label)
+            intersep(pathtodat, f, pathtoLband, fsave, i, label, binfrac, verbose)
+        
+    return
+
+def get_interactionsep_old(pathtodat, pathtoLband, pathtosave, verbose=False):
     '''
     Creates plot files with the interaction separation of DWDs. In order to
     run this, there must be already-existing LISA band files created with

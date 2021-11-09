@@ -172,12 +172,12 @@ def plot_formeff(effHe, effHe05, effCOHe, effCOHe05, effCO, effCO05, effONe, eff
     
     plt.tight_layout()
     plt.subplots_adjust(wspace=0.25)
-    ax[0].set_yticks(np.arange(0.25, 2.75, 0.5))
-    ax[1].set_yticks(np.arange(0.75, 4.0, 0.75))
-    ax[1].set_ylim(top=3.85)
-    ax[2].set_yticks(np.arange(1,7,1.25))
-    ax[3].set_yticks(np.arange(0.1, 0.5, 0.1))
-    ax[3].set_yticklabels(['0.10', '0.20', '0.30', '0.40'])
+    #ax[0].set_yticks(np.arange(0.25, 2.75, 0.5))
+    #ax[1].set_yticks(np.arange(0.75, 4.0, 0.75))
+    #ax[1].set_ylim(top=3.85)
+    #ax[2].set_yticks(np.arange(1,7,1.25))
+    #ax[3].set_yticks(np.arange(0.1, 0.5, 0.1))
+    #ax[3].set_yticklabels(['0.10', '0.20', '0.30', '0.40'])
     if save:
         plt.savefig('form_eff.png', dpi=250)
     else:
@@ -487,9 +487,9 @@ def make_Mc_dist_plot_total(pathtodat, save=False):
         ax[i].tick_params(labelsize=15)
 
         
-    ax[3].set_ylim(0, 1.85)
+    #ax[3].set_ylim(0, 1.85)
     for j in range(4):
-        ax[j].set_xlim(0, 25)
+        ax[j].set_xlim(0, 30)
     
     plt.tight_layout()
     if save:
