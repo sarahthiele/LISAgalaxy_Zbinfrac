@@ -654,7 +654,7 @@ def plot_intersep(Heinter, COHeinter, COinter, ONeinter, whichsep, FIREmin=0.000
         ax[i].xaxis.set_minor_locator(AutoMinorLocator())
         ax[i].yaxis.set_minor_locator(AutoMinorLocator())
     #ax[0].set_ylabel('Avg. Interaction\nSeparation (10$^3$ R$_\odot$)', fontsize=18)
-    ax[0].set_ylabel(r'$\overline{Interaction \ Sep}.$  [10$^3$ R$_\odot$]', fontsize=16)
+    ax[0].set_ylabel(r'$\overline{a}_{\rm{CE}}$  [10$^3$ R$_\odot$]', fontsize=16)
 
     #ax[0].set_yticks(np.arange(0.1, 0.6, 0.1))
     #ax[0].set_ylim(0.09, 0.505)

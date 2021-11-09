@@ -521,13 +521,13 @@ def make_galaxy(dat, verbose=False):
         conv['bin_num'] = conv.index.values
     
     # load key evolution points in DWD formation
-    bpp = pd.read_hdf(pathtodat+filename, key='bpp')
+    # bpp = pd.read_hdf(pathtodat+filename, key='bpp')
 
     # retrieve close binaries (i.e. P<1e4 days)
-    initporbs = bpp.groupby('bin_num').first().porb
-    conv = conv.loc[conv.bin_num.isin(initporbs.loc[initporbs<1e4].index)]
-    bpp = []
-    initporbs = []
+    # initporbs = bpp.groupby('bin_num').first().porb
+    # conv = conv.loc[conv.bin_num.isin(initporbs.loc[initporbs<1e4].index)]
+    # bpp = []
+    # initporbs = []
     
     # overwrite COSMIC radii
     conv['rad_1'] = rad_WD(conv.mass_1.values)
