@@ -516,16 +516,18 @@ def make_galaxy(dat, verbose=False):
     
     # Load DWD data at formation of the second DWD component
     conv = pd.read_hdf(pathtodat+filename, key='conv')
+    if 'bin_num' not in conv.columns
+        conv.index = convCO.index.rename('index')
+        conv['bin_num'] = convCO.index.values
     
     # load key evolution points in DWD formation
     bpp = pd.read_hdf(pathtodat+filename, key='bpp')
 
-    # Load DWD data at formation of the second DWD component
-    conv = pd.read_hdf(pathtodat+filename, key='conv')
-
     # retrieve close binaries (i.e. P<1e4 days)
     initporbs = bpp.groupby('bin_num').first().porb
     conv = conv.loc[conv.bin_num.isin(initporbs.loc[initporbs<1e4].index)]
+    bpp = []
+    initporbs = []
     
     # overwrite COSMIC radii
     conv['rad_1'] = rad_WD(conv.mass_1.values)
@@ -802,7 +804,7 @@ def get_formeff(pathtodat, pathtoLband, pathtosave, getfrom='Lband'):
     
     return
 
-def get_interactionsep(pathtodat, pathtoLband, pathtosave, verbose=False):
+def get_interactionsep_old(pathtodat, pathtoLband, pathtosave, verbose=False):
     '''
     Creates plot files with the interaction separation of DWDs. In order to
     run this, there must be already-existing LISA band files created with
@@ -845,7 +847,9 @@ def get_interactionsep(pathtodat, pathtoLband, pathtosave, verbose=False):
             if verbose:
                 print('dat file: ' + datfile)
             dat = pd.read_hdf(pathtodat+datfile, key='bpp') 
-            #dat['bin_num'] = dat.index.values
+            if 'bin_num' not in dat.columns
+                dat.index = dat.index.rename('index')
+                dat['bin_num'] = dat.index.values
             dat = dat[['tphys', 'evol_type', 'sep']]
     
             RLOFsep = dat.loc[dat.evol_type==3].groupby('bin_num', as_index=True).first()
@@ -920,7 +924,7 @@ def get_interactionsep(pathtodat, pathtoLband, pathtosave, verbose=False):
         
     return
 
-def get_interactionsep_old(pathtodat, pathtoLband, pathtosave, verbose=False):
+def get_interactionsep(pathtodat, pathtoLband, pathtosave, verbose=False):
     '''
     Creates plot files with the interaction separation of DWDs. In order to
     run this, there must be already-existing LISA band files created with
@@ -961,6 +965,9 @@ def get_interactionsep_old(pathtodat, pathtoLband, pathtosave, verbose=False):
             if verbose:
                 print('dat file: ' + datfile)
             dat = pd.read_hdf(pathtodat+datfile, key='bpp') 
+            if 'bin_num' not in dat.columns
+                dat.index = dat.index.rename('index')
+                dat['bin_num'] = dat.index.values
             dat = dat[['tphys', 'evol_type', 'sep', 'bin_num']]
     
             RLOFsep = dat.loc[dat.evol_type==3].groupby('bin_num', as_index=False).first()
