@@ -517,8 +517,8 @@ def make_galaxy(dat, verbose=False):
     # Load DWD data at formation of the second DWD component
     conv = pd.read_hdf(pathtodat+filename, key='conv')
     if 'bin_num' not in conv.columns:
-        conv.index = convCO.index.rename('index')
-        conv['bin_num'] = convCO.index.values
+        conv.index = conv.index.rename('index')
+        conv['bin_num'] = conv.index.values
     
     # load key evolution points in DWD formation
     bpp = pd.read_hdf(pathtodat+filename, key='bpp')
