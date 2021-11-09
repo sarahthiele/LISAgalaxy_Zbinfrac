@@ -473,8 +473,8 @@ def filter_population(dat):
         return LISA_band
     
 def make_galaxy(dat, verbose=False):
-    import pdb
-    pdb.set_trace()
+    #import pdb
+    #pdb.set_trace()
     '''
     Creates populations of DWDs orbiting in the LISA band for a given
     DWD type and metallicity.
