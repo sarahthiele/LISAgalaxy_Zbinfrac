@@ -516,7 +516,7 @@ def make_galaxy(dat, verbose=False):
     
     # Load DWD data at formation of the second DWD component
     conv = pd.read_hdf(pathtodat+filename, key='conv')
-    if 'bin_num' not in conv.columns
+    if 'bin_num' not in conv.columns:
         conv.index = convCO.index.rename('index')
         conv['bin_num'] = convCO.index.values
     
@@ -847,7 +847,7 @@ def get_interactionsep_old(pathtodat, pathtoLband, pathtosave, verbose=False):
             if verbose:
                 print('dat file: ' + datfile)
             dat = pd.read_hdf(pathtodat+datfile, key='bpp') 
-            if 'bin_num' not in dat.columns
+            if 'bin_num' not in dat.columns:
                 dat.index = dat.index.rename('index')
                 dat['bin_num'] = dat.index.values
             dat = dat[['tphys', 'evol_type', 'sep']]
@@ -965,7 +965,7 @@ def get_interactionsep(pathtodat, pathtoLband, pathtosave, verbose=False):
             if verbose:
                 print('dat file: ' + datfile)
             dat = pd.read_hdf(pathtodat+datfile, key='bpp') 
-            if 'bin_num' not in dat.columns
+            if 'bin_num' not in dat.columns:
                 dat.index = dat.index.rename('index')
                 dat['bin_num'] = dat.index.values
             dat = dat[['tphys', 'evol_type', 'sep', 'bin_num']]
