@@ -19,6 +19,7 @@ from astropy.time import Time
 rcParams['font.family'] = 'serif'
 rcParams['font.size'] = 14
 rcParams['mathtext.default'] = 'regular'
+rcParams['text.usetex'] = True
 
 obs_sec = 4 * u.yr.to('s')
 obs_hz = 1 / obs_sec
@@ -47,7 +48,7 @@ mag_lim = 23  # chosen bolometric magnitude limit
 def plot_FIRE_F_mass(FIRE_path, met_arr, save=False):
     FIRE = pd.read_hdf(FIRE_path+'FIRE.h5')
     fig, ax = plt.subplots()
-    plt.grid(lw=0.25, which='both')
+    plt.grid(lw=0.25, which='both', rasterized=True)
     bins = np.append(met_arr[1:-1]/Z_sun, FIRE.met.max())
     bins = np.append(FIRE.met.min(), bins)
     bins = np.log10(bins)
@@ -59,23 +60,24 @@ def plot_FIRE_F_mass(FIRE_path, met_arr, save=False):
     ax2.legend(loc='lower left', bbox_to_anchor= (0.6, 1.01), ncol=4, borderaxespad=0, frameon=False, 
               fontsize=20)
     ax.scatter(np.log10(met_arr[1:]/Z_sun), get_binfrac_of_Z(met_arr[1:]), color='k', s=15, zorder=2, 
-               label='COSMIC Z grid')
+               label='COSMIC Z grid', rasterized=True)
     met_plot = np.linspace(FIRE.met.min()*Z_sun, FIRE.met.max()*Z_sun, 10000)
-    ax.plot(np.log10(met_plot/Z_sun), get_binfrac_of_Z(met_plot), color='k', label='FZ')
+    ax.plot(np.log10(met_plot/Z_sun), get_binfrac_of_Z(met_plot), color='k', label='FZ', rasterized=True)
     ax.set_xlim(bins[1]-0.17693008, bins[-2] + 2 * 0.17693008)
     ax.legend(loc='lower left', bbox_to_anchor= (0.0, 1.01), ncol=4, borderaxespad=0, frameon=False, 
               fontsize=20, markerscale=3)
     ax.set_zorder(ax2.get_zorder()+1)
     ax.patch.set_visible(False)
     ax.set_xlabel('Log$_{10}$(Z/Z$_\odot$)')
-    #ax.set_ylabel('Binary Fraction f$_b$(Z)')
     ax.set_ylabel('Binary Fraction')
     ax2.set_ylabel(r'M$_{\rm{stars}}$ per Z bin (M$_\odot$)')
-    #plt.savefig('PaperPlots/FIREfb.png')
     ax2.set_yticks([1e4, 1e5, 1e6, 1e7]);
     ax2.set_yticklabels(['7e7', '7e8', '7e9', '7e10']);
+    ax2.tick_params(labelsize=20)
+    ax.tick_params(labelsize=20)
+    ax2.set_ylim(1e4-0.1e4, 1e7+0.1e7)
     if save:
-        plt.savefig('SFH_vs_fb.png', dpi=250)
+        plt.savefig('SFH_vs_fb.png', bbox_inches='tight', dpi=250)
     else:
         plt.show(block=False)
 
@@ -172,12 +174,12 @@ def plot_formeff(effHe, effHe05, effCOHe, effCOHe05, effCO, effCO05, effONe, eff
     
     plt.tight_layout()
     plt.subplots_adjust(wspace=0.25)
-    #ax[0].set_yticks(np.arange(0.25, 2.75, 0.5))
-    #ax[1].set_yticks(np.arange(0.75, 4.0, 0.75))
-    #ax[1].set_ylim(top=3.85)
-    #ax[2].set_yticks(np.arange(1,7,1.25))
-    #ax[3].set_yticks(np.arange(0.1, 0.5, 0.1))
-    #ax[3].set_yticklabels(['0.10', '0.20', '0.30', '0.40'])
+    ax[0].set_yticks(np.arange(0.25, 2.75, 0.5))
+    ax[1].set_yticks(np.arange(0.75, 4.0, 0.75))
+    ax[1].set_ylim(top=3.85)
+    ax[2].set_yticks(np.arange(1,7,1.25))
+    ax[3].set_yticks(np.arange(0.1, 0.5, 0.1))
+    ax[3].set_yticklabels(['0.10', '0.20', '0.30', '0.40'])
     if save:
         plt.savefig('form_eff.png', dpi=250)
     else:
@@ -185,7 +187,7 @@ def plot_formeff(effHe, effHe05, effCOHe, effCOHe05, effCO, effCO05, effONe, eff
         
     return()
 
-def make_numLISAplot(numsFZ, numsF50, FIREmin=0.00015, FIREmax=13.346, Z_sun=0.02, save=False):
+def plot_numLISA(numsFZ, numsF50, FIREmin=0.00015, FIREmax=13.346, Z_sun=0.02, save=False):
     num = 30
     met_bins = np.logspace(np.log10(FIREmin), np.log10(FIREmax), num)*Z_sun
 
@@ -226,9 +228,6 @@ def make_numLISAplot(numsFZ, numsF50, FIREmin=0.00015, FIREmax=13.346, Z_sun=0.0
     ax[3].text(0.05, 0.85, 'ONe + X', fontsize=18, transform=ax[3].transAxes)
 
     for i in range(4):
-        #ax[i].set_yscale('log')
-        #ax[i].set_ylim(10, 2.5e6)
-        #ax[i].grid(which='both', zorder=0, alpha=0.2)
         ax[i].set_xlabel('Log$_{10}$(Z/Z$_\odot$)', fontsize=18)
         ax[i].set_xticks([-3, -2, -1, 0, 1.])
         ax[i].legend(loc='lower left', bbox_to_anchor= (-0.02, 1.01), ncol=2, 
@@ -240,17 +239,12 @@ def make_numLISAplot(numsFZ, numsF50, FIREmin=0.00015, FIREmax=13.346, Z_sun=0.0
     ax[0].set_ylabel(r'N$_{f_{\rm{GW}} \geq 10^{-4} \rm{Hz}}$ (Z) [10$^5$]', fontsize=18)
     plt.tight_layout()
     plt.subplots_adjust(wspace=0.25)
-    #ax[0].set_yticks(np.arange(0.0, 2.5, 0.5))
-    #ax[0].set_ylim(top=2.05)
-    ##ax[0].set_ylim(0.09, 0.505)
-    ##ax[0].set_yticklabels(['0.10', '0.20', '0.30', '0.40', '0.50'])
-    #ax[1].set_yticks(np.arange(0, 20, 4))
-    #ax[1].set_ylim(top=18)
-    #ax[1].set_yticklabels(np.arange(0, 20, 4).astype(float).astype(str))
-    ##ax[2].set_yticks(np.arange(0.0, 3.5, 0.5))
-    ##ax[3].set_yticks(np.arange(1.0, 3.5, 0.5))
-    ##ax[3].set_yticklabels(['1.00', '1.50', '2.00', '2.50', '3.00'])
-    #ax[3].set_ylim(top=0.81)
+    ax[0].set_yticks(np.arange(0.0, 2.5, 0.5))
+    ax[0].set_ylim(top=2.05)
+    ax[1].set_yticks(np.arange(0, 20, 4))
+    ax[1].set_ylim(top=18)
+    ax[1].set_yticklabels(np.arange(0, 20, 4).astype(float).astype(str))
+    ax[3].set_ylim(top=0.81)
 
     if save:
         plt.savefig('N_LISA_vs_met.png', dpi=250)
@@ -413,12 +407,12 @@ def make_Mc_fgw_plot(pathtodat, model):
         ax[i,0].set_xticklabels('')
         ax[i,1].set_xticklabels('')
         ax[i,2].set_xticklabels('')
-        #ax[3,i].set_xticks([-4.25, -3.75, -3.25, -2.75])
-        #ax[3,i].set_xticklabels(['-4.25', '-3.75', '-3.25', '-2.75'])
-        #ax[0,i].set_ylim(0.175, 0.375)
-        #ax[2,i].set_ylim(0.3, 1.05)
-        #ax[1,i].set_ylim(0.2, 0.6)
-        #ax[3,i].set_ylim(0.3, 1.1)
+        ax[3,i].set_xticks([-4.25, -3.75, -3.25, -2.75])
+        ax[3,i].set_xticklabels(['-4.25', '-3.75', '-3.25', '-2.75'])
+        ax[0,i].set_ylim(0.175, 0.375)
+        ax[2,i].set_ylim(0.3, 1.05)
+        ax[1,i].set_ylim(0.2, 0.6)
+        ax[3,i].set_ylim(0.3, 1.1)
         ax[0,i].text(0.85, 0.85, 'He + He', fontsize=18, horizontalalignment='center', 
                      transform=ax[0,i].transAxes)
         ax[1,i].text(0.85, 0.85, 'CO + He', fontsize=18, horizontalalignment='center', 
@@ -470,33 +464,51 @@ def make_Mc_dist_plot_total(pathtodat, save=False):
     for dist, Mc, dist_F50, Mc_F50, ii in zip(dists, M_c, dists_F50, M_c_F50, range(len(dists))):
         sns.kdeplot(
             x=dist.values, y=Mc, fill=False, ax=ax[ii], color=colors[0], 
-            zorder=3, linewidths=2.5, label='FZ', levels=levels
+            zorder=3, linewidths=3.5, label='FZ', levels=levels, rasterized=True
         )
         sns.kdeplot(
             x=dist_F50.values, y=Mc_F50, fill=False, ax=ax[ii], color=colors[1], 
-            zorder=3, linewidths=2.5, linestyles='--', label='F50', levels=levels
+            zorder=3, linewidths=3.5, linestyles='--', label='F50', levels=levels, rasterized=True
         )
-        ax[ii].legend(loc=(0, 1.01), prop={'size':15}, ncol=2, frameon=False)
-    
-    ax[0].set_ylabel('Chirp Mass [M$_\odot$]', fontsize=18)
+        ax[ii].legend(loc=(0, 1.01), prop={'size':22}, ncol=2, frameon=False)
+
+    ax[0].set_ylabel('Chirp Mass [M$_\odot$]', fontsize=24)
     for i, name in zip(range(4), labels):
-        ax[i].set_xlabel(r'Distance [kpc]', fontsize=18)
-        ax[i].text(1.8, label_y[i], name, fontsize=18, horizontalalignment='left')
+        ax[i].set_xlabel(r'Distance [kpc]', fontsize=24)
+        ax[i].text(0.05, 0.9, name, fontsize=22, horizontalalignment='left',
+                   transform=ax[i].transAxes)
         ax[i].xaxis.set_minor_locator(AutoMinorLocator())
         ax[i].yaxis.set_minor_locator(AutoMinorLocator())
-        ax[i].tick_params(labelsize=15)
+        ax[i].tick_params(labelsize=22)
 
-        
-    #ax[3].set_ylim(0, 1.85)
+
+    ax[3].set_ylim(0, 1.85)
     for j in range(4):
-        ax[j].set_xlim(0, 30)
-    
+        ax[j].set_xlim(0, 25)
+
     plt.tight_layout()
+    plt.subplots_adjust(wspace=0.25)
+
+
+    ax[0].set_yticks(np.arange(0.2, 0.42, 0.05))
+    ax[0].set_ylim(0.17, 0.36)
+
+    ax[1].set_yticks([0.25, 0.3, 0.35, 0.4, 0.45, 0.5])
+    ax[1].set_ylim(0.23, 0.525)
+
+    ax[2].set_yticks(np.arange(0.25, 1.05, 0.15))
+    ax[2].set_ylim(0.345, 0.95)
+
+    #ax[3].set_yticks(np.arange(0.25, 1.75, 0.25))
+    ax[3].set_yticks(np.arange(0.3, 1.6, 0.3))
+    ax[3].set_yticklabels(['0.30', '0.60', '0.90', '1.20', '1.50'])
+    ax[3].set_ylim(0.175, 1.55)
+
     if save:
         plt.savefig('Mc_vs_dist.png', dpi=250)
     else:
-        plt.show(block=False)        
-    return
+        plt.show(block=False)       
+        return
 
 def make_Mc_f_gw_plot_total(pathtodat, save=False):
     resolved_dat_FZ = pd.read_hdf(pathtodat+'resolved_DWDs_{}.hdf'.format('FZ'), key='resolved')
@@ -653,18 +665,22 @@ def plot_intersep(Heinter, COHeinter, COinter, ONeinter, whichsep, FIREmin=0.000
               fontsize=15, markerscale=0.5)
         ax[i].xaxis.set_minor_locator(AutoMinorLocator())
         ax[i].yaxis.set_minor_locator(AutoMinorLocator())
-    #ax[0].set_ylabel('Avg. Interaction\nSeparation (10$^3$ R$_\odot$)', fontsize=18)
-    ax[0].set_ylabel(r'$\overline{a}_{\rm{CE}}$  [10$^3$ R$_\odot$]', fontsize=16)
+        
+    if whichsep == 'CEsep':
+        ax[0].set_ylabel(r'$\overline{a}_{\rm{CE}}$  [10$^3$ R$_\odot$]', fontsize=16)
+    else:
+        ax[0].set_ylabel(r'$\overline{a}_{\rm{RLO}}$  [10$^3$ R$_\odot$]', fontsize=16)
 
-    #ax[0].set_yticks(np.arange(0.1, 0.6, 0.1))
-    #ax[0].set_ylim(0.09, 0.505)
-    #ax[0].set_yticklabels(['0.10', '0.20', '0.30', '0.40', '0.50'])
-    #ax[1].set_yticks(np.arange(0.25, 1.5, 0.25))
-    ##ax[1].set_yticklabels(['0.20', '0.40', '0.60', '0.80', '1.00', '1.20'])
-    #ax[2].set_yticks(np.arange(0.25, 2.75,0.5))
-    #ax[3].set_yticks(np.arange(1.0, 3.5, 0.5))
-    #ax[3].set_yticklabels(['1.00', '1.50', '2.00', '2.50', '3.00'])
-    #ax[3].set_ylim(top=3.05)
+
+    ax[0].set_yticks(np.arange(0.1, 0.6, 0.1))
+    ax[0].set_ylim(0.09, 0.505)
+    ax[0].set_yticklabels(['0.10', '0.20', '0.30', '0.40', '0.50'])
+    ax[1].set_yticks(np.arange(0.25, 1.5, 0.25))
+    #ax[1].set_yticklabels(['0.20', '0.40', '0.60', '0.80', '1.00', '1.20'])
+    ax[2].set_yticks(np.arange(0.25, 2.75,0.5))
+    ax[3].set_yticks(np.arange(1.0, 3.5, 0.5))
+    ax[3].set_yticklabels(['1.00', '1.50', '2.00', '2.50', '3.00'])
+    ax[3].set_ylim(top=3.05)
 
     plt.tight_layout()
     plt.subplots_adjust(wspace=0.25)
